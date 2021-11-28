@@ -1262,6 +1262,68 @@ class MaxsmartTempCalibration(LocalDataCluster, AnalogOutput):
         return ([foundation.WriteAttributesStatusRecord(foundation.Status.SUCCESS)],)
 
 
+class MaxsmartLocalTempUpdate(LocalDataCluster, OnOff):
+    """Local temperature update switch."""
+
+    async def write_attributes(self, attributes, manufacturer=None):
+        """Defer attributes writing to the set_data tuya command."""
+        records = self._write_attr_records(attributes)
+        if not records:
+            return [[foundation.WriteAttributesStatusRecord(foundation.Status.SUCCESS)]]
+
+        for record in records:
+            attr_name = self.attributes[record.attrid][0]
+            if attr_name == "on_off":
+                return await MaxsmartManufClusterSelf[
+                    self.endpoint.device.ieee
+                ].endpoint.tuya_manufacturer.write_attributes(
+                    {MAXSMART_TEMPERATURE_ATTR: 0}, manufacturer=None
+                )
+
+        return [
+            [
+                foundation.WriteAttributesStatusRecord(
+                    foundation.Status.FAILURE, r.attrid
+                )
+                for r in records
+            ]
+        ]
+
+    async def command(
+        self,
+        command_id: Union[foundation.Command, int, t.uint8_t],
+        *args,
+        manufacturer: Optional[Union[int, t.uint16_t]] = None,
+        expect_reply: bool = True,
+        tsn: Optional[Union[int, t.uint8_t]] = None,
+    ):
+        """Override the default Cluster command."""
+
+        if command_id in (0x0000, 0x0001, 0x0002):
+            if command_id == 0x0000:
+                value = False
+            elif command_id == 0x0001:
+                value = True
+            else:
+                attrid = self.attridx["on_off"]
+                success, _ = await self.read_attributes(
+                    (attrid,), manufacturer=manufacturer
+                )
+                try:
+                    value = success[attrid]
+                except KeyError:
+                    return foundation.Status.FAILURE
+                value = not value
+
+            (res,) = await self.write_attributes(
+                {"on_off": value}, manufacturer=manufacturer
+            )
+
+            return [command_id, res]
+
+        return [command_id, foundation.Status.UNSUP_CLUSTER_COMMAND]
+
+
 class Maxsmart(TuyaThermostat):
     """Maxsmart Thermostatic radiator valve."""
 
@@ -1411,6 +1473,14 @@ class Maxsmart(TuyaThermostat):
                 PROFILE_ID: zha.PROFILE_ID,
                 DEVICE_TYPE: zha.DeviceType.CONSUMPTION_AWARENESS_DEVICE,
                 INPUT_CLUSTERS: [MaxsmartTempCalibration],
+                OUTPUT_CLUSTERS: [],
+            },
+            16: {
+                PROFILE_ID: zha.PROFILE_ID,
+                DEVICE_TYPE: zha.DeviceType.ON_OFF_SWITCH,
+                INPUT_CLUSTERS: [
+                    MaxsmartLocalTempUpdate,
+                ],
                 OUTPUT_CLUSTERS: [],
             },
         }
@@ -1564,6 +1634,14 @@ class Silvercrest(TuyaThermostat):
                 PROFILE_ID: zha.PROFILE_ID,
                 DEVICE_TYPE: zha.DeviceType.CONSUMPTION_AWARENESS_DEVICE,
                 INPUT_CLUSTERS: [MaxsmartTempCalibration],
+                OUTPUT_CLUSTERS: [],
+            },
+            16: {
+                PROFILE_ID: zha.PROFILE_ID,
+                DEVICE_TYPE: zha.DeviceType.ON_OFF_SWITCH,
+                INPUT_CLUSTERS: [
+                    MaxsmartLocalTempUpdate,
+                ],
                 OUTPUT_CLUSTERS: [],
             },
         }
