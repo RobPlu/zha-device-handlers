@@ -30,7 +30,7 @@ import zhaquirks.tuya.ts0601_motion
 import zhaquirks.tuya.ts0601_siren
 import zhaquirks.tuya.ts0601_trv_moes
 import zhaquirks.tuya.ts0601_trv_siterwell
-
+import zhaquirks.tuya.ts0601_trv_beca
 
 from tests.common import ClusterListener
 
@@ -409,7 +409,7 @@ async def test_siren_send_attribute(zigpy_device_from_quirk, quirk):
         _, status = await switch_cluster.command(0x0003)
         assert status == foundation.Status.UNSUP_CLUSTER_COMMAND
 
-'''
+
 @pytest.mark.parametrize("quirk", (zhaquirks.tuya.ts0601_trv_siterwell.SiterwellGS361_Type1,))
 async def test_valve_state_report(zigpy_device_from_quirk, quirk):
     """Test thermostatic valves standard reporting from incoming commands."""
@@ -1080,7 +1080,7 @@ async def test_moes(zigpy_device_from_quirk, quirk):
         )
         datetime.datetime = origdatetime
 
-'''
+
 @pytest.mark.parametrize("quirk", (zhaquirks.tuya.ts0601_electric_heating.MoesBHT,))
 async def test_eheating_state_report(zigpy_device_from_quirk, quirk):
     """Test thermostatic valves standard reporting from incoming commands."""
