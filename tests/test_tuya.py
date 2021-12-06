@@ -30,6 +30,7 @@ import zhaquirks.tuya.ts0601_motion
 import zhaquirks.tuya.ts0601_siren
 import zhaquirks.tuya.ts0601_trv_moes
 import zhaquirks.tuya.ts0601_trv_siterwell
+import zhaquirks.tuya.ts0601_trv_beca
 
 from tests.common import ClusterListener
 
